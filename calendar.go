@@ -2,10 +2,12 @@ package googlewrapper
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"time"
 
 	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 	calendar "google.golang.org/api/calendar/v3"
 )
 
@@ -97,4 +99,17 @@ func GetCalendar(config *oauth2.Config, calendarToken string) *calendar.Service 
 	}
 
 	return srv
+}
+
+func CalendarConfigFromFile(file string, scope ...string) (config *oauth2.Config, err error) {
+	dat, err := ioutil.ReadFile(file)
+	if err != nil {
+		return config, err
+	}
+	config, err = google.ConfigFromJSON(dat, calendar.CalendarScope)
+	if err != nil {
+		log.Fatalf("Unable to parse client secret file to config: %v", err)
+	}
+
+	return config, err
 }

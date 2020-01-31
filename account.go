@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -14,19 +13,21 @@ import (
 	calendar "google.golang.org/api/calendar/v3"
 )
 
-// Retrieve a token, saves the token, then returns the generated client.
-func GetClient(config *oauth2.Config, calendarToken string) *http.Client {
-	// TOKEN FROM FILE
-	//tok, err := TokenFromFile(calendarToken)
-	//if err != nil {
-	//	tok = GetTokenFromWeb(config)
-	//	SaveToken(calendarToken, tok)
-	//}
+func ForceNewCreds(config *oauth2.Config) (err error) {
 
+	GetClient(config, "")
+
+	return err
+}
+
+// Retrieve a token, saves the token, then returns the generated client.
+func GetClient(config *oauth2.Config, token string) *http.Client {
 	tok := &oauth2.Token{}
-	err := json.Unmarshal([]byte(calendarToken), tok)
+	err := json.Unmarshal([]byte(token), tok)
 	if err != nil {
-		panic(err)
+		tok = GetTokenFromWeb(config)
+		SaveToken("token.json", tok)
+
 	}
 	return config.Client(context.Background(), tok)
 }
@@ -62,19 +63,6 @@ func TokenFromFile(file string) (*oauth2.Token, error) {
 
 func ConfigFromString(configString string) (config *oauth2.Config, err error) {
 	config, err = google.ConfigFromJSON([]byte(configString), calendar.CalendarScope)
-	if err != nil {
-		log.Fatalf("Unable to parse client secret file to config: %v", err)
-	}
-
-	return config, err
-}
-
-func ConfigFromFile(file string) (config *oauth2.Config, err error) {
-	dat, err := ioutil.ReadFile(file)
-	if err != nil {
-		return config, err
-	}
-	config, err = google.ConfigFromJSON(dat, calendar.CalendarScope)
 	if err != nil {
 		log.Fatalf("Unable to parse client secret file to config: %v", err)
 	}
